@@ -97,13 +97,15 @@ diceSix = pygame.transform.scale(pygame.image.load(pathToSprite + 'diceSix.png')
 
 
 class Unit:
-    def __init__(self, screen, pos, name, colour, world, selected, playerNumber):
+    def __init__(self, screen, pos, name, colour, world, selected, playerNumber, unitNumber):
         self.pos = pos
         self.colour = colour
         self.world = world
         self.bounds = (self.world[self.pos].posx, self.world[self.pos].posy, boxSizeX, boxSizeY)
         self.isSelected = selected
         self.playerNumber = playerNumber
+        self.unitNumber = unitNumber
+        self.basicfont = pygame.font.SysFont(None, 20)
         self.power = 1
 
     def selected(self):
@@ -111,18 +113,21 @@ class Unit:
 
     def update(self):
         #player = pygame.draw.rect(screen, self.colour, self.bounds)
-        player = pygame.draw.rect(screen, self.colour, (self.world[self.pos].posx, self.world[self.pos].posy, boxSizeX, boxSizeY))
+        self.player = pygame.draw.rect(screen, self.colour, (self.world[self.pos].posx, self.world[self.pos].posy, boxSizeX, boxSizeY))
+        self.unitNumberText = self.basicfont.render(str(self.unitNumber), True, (255, 0, 255), brown)
         if self.playerNumber == 1:
             screen.blit(man1, (self.world[self.pos].posx, self.world[self.pos].posy))
         elif self.playerNumber == 2:
             screen.blit(man2, (self.world[self.pos].posx, self.world[self.pos].posy))
+        screen.blit(self.unitNumberText, (self.world[self.pos].posx + manSizeX, self.world[self.pos].posy))
 
         
 
 
 class Player:
 
-    def __init__(self, screen, pos, world, colour, name, playerNumber, playerStatsX):
+    def __init__(self, screen, turn, pos, world, colour, name, playerNumber, playerStatsX):
+        self.turn = turn
         self.pos = pos
         self.world = world
         self.name = name
@@ -136,30 +141,75 @@ class Player:
         self.textPosition = playerStatsX + 20
         self.basicfont = pygame.font.SysFont(None, 20)
         self.lineSpace = 20
+        self.points = 0
+        self.rolled = False
         self.buttons = []
         if playerNumber == 1:
-            self.unit1 = Unit(screen, self.pos + 1, self.name, self.colour, self.world, True, self.playerNumber)
-            self.unit2 = Unit(screen, self.pos + 2, self.name, self.colour, self.world, False, self.playerNumber)
-            self.unit3 = Unit(screen, self.pos + 3, self.name, self.colour, self.world, False, self.playerNumber)
+            self.unit1 = Unit(screen, self.pos + 1, self.name, self.colour, self.world, True, self.playerNumber, 1)
+            self.unit2 = Unit(screen, self.pos + 2, self.name, self.colour, self.world, False, self.playerNumber, 2)
+            self.unit3 = Unit(screen, self.pos + 3, self.name, self.colour, self.world, False, self.playerNumber, 3)
+            self.dice = Dice(screen, (self.textPosition, self.textLine(0)))
             
         else:
-            self.unit1 = Unit(screen, self.pos + 1 + amountBoxY * (amountBoxX - 1), self.name, self.colour, self.world, True, self.playerNumber)
-            self.unit2 = Unit(screen, self.pos + 2 + amountBoxY * (amountBoxX - 1), self.name, self.colour, self.world, False, self.playerNumber)
-            self.unit3 = Unit(screen, self.pos + 3 + amountBoxY * (amountBoxX - 1), self.name, self.colour, self.world, False, self.playerNumber)           
+            self.unit1 = Unit(screen, self.pos + 1 + amountBoxY * (amountBoxX - 1), self.name, self.colour, self.world, True, self.playerNumber, 1)
+            self.unit2 = Unit(screen, self.pos + 2 + amountBoxY * (amountBoxX - 1), self.name, self.colour, self.world, False, self.playerNumber, 2)
+            self.unit3 = Unit(screen, self.pos + 3 + amountBoxY * (amountBoxX - 1), self.name, self.colour, self.world, False, self.playerNumber, 3)
+            self.dice = Dice(screen, (self.textPosition, self.textLine(0)))  
         self.units = [self.unit1, self.unit2, self.unit3]
+        self.unit1PowerUpgrade = Button(screen, (self.textPosition, self.textLine(11)), 100, 20, white, red, blue, "upgradeUnit", 20, "Upgrade Unit 1", "Upgrade Unit 1", "Unit 1 Upgraded")
+        self.unit1SelectUnit = Button(screen, (self.textPosition, self.textLine(12)), 100, 20, white, red, blue, "selectUnit", 20, "Select Unit 1", "Select Unit 1", "Unit 1 Selected")
+        self.unit2PowerUpgrade = Button(screen, (self.textPosition, self.textLine(14)), 100, 20, white, red, blue, "upgradeUnit", 20, "Upgrade Unit 2", "Upgrade Unit 2", "Unit 2 Upgraded")
+        self.unit2SelectUnit = Button(screen, (self.textPosition, self.textLine(15)), 100, 20, white, red, blue, "selectUnit", 20, "Select Unit 2", "Select Unit 2", "Unit 2 Selected")
+        self.unit3PowerUpgrade = Button(screen, (self.textPosition, self.textLine(17)), 100, 20, white, red, blue, "upgradeUnit", 20, "Upgrade Unit 3", "Upgrade Unit 3", "Unit 3 Upgraded")
+        self.unit3SelectUnit = Button(screen, (self.textPosition, self.textLine(18)), 100, 20, white, red, blue, "selectUnit", 20, "Select Unit 3", "Select Unit 3", "Unit 3 Selected")
+
+        self.endTurn = Button(screen, (self.textPosition, self.textLine(25)), 100, 20, white, red, blue, "endTurn", 20, "End Turn", "End Turn", "Turn Ended")
+        self.buttons = [self.unit1PowerUpgrade, self.unit2PowerUpgrade, self.unit3PowerUpgrade, self.unit1SelectUnit, self.unit2SelectUnit, self.unit3SelectUnit, self.endTurn]
+
 
     def textLine(self, line):
-        return line * self.lineSpace
+        return line * self.lineSpace + arrayOffsetY
 
     def clickDetected(self, pos):
         if self.unit1PowerUpgrade.mouseClick(pos):
             self.unit1.power += 1
+        if self.unit2PowerUpgrade.mouseClick(pos):
+            self.unit2.power += 1
+        if self.unit3PowerUpgrade.mouseClick(pos):
+            self.unit3.power += 1
+        if self.unit1SelectUnit.mouseClick(pos):
+            self.unit1.isSelected = True
+            self.unit2.isSelected = False
+            self.unit3.isSelected = False
+        if self.unit2SelectUnit.mouseClick(pos):
+            self.unit1.isSelected = False
+            self.unit2.isSelected = True
+            self.unit3.isSelected = False
+        if self.unit3SelectUnit.mouseClick(pos):
+            self.unit1.isSelected = False
+            self.unit2.isSelected = False
+            self.unit3.isSelected = True
+        if self.endTurn.mouseClick(pos):
+            self.turn = False
+        if self.dice.bounds.collidepoint(pos):
+            if not self.rolled:
+                self.dice.clicked()
+                self.points = self.dice.roll
+                self.rolled = True
+
 
     def stats(self):
         self.unit1PowerText = self.basicfont.render(("Unit1 Power: " + str(self.unit1.power)), True, (255, 0, 255), brown)
-        self.unit1PowerUpgrade = Button(screen, (self.textPosition, self.textLine(12)), 100, 20, white, red, white, "upgradeUnit", 15, "Upgrade Unit 1", "Upgrade Unit 1", "Unit 1 Upgraded")
+        self.unit2PowerText = self.basicfont.render(("Unit2 Power: " + str(self.unit2.power)), True, (255, 0, 255), brown)
+        self.unit3PowerText = self.basicfont.render(("Unit3 Power: " + str(self.unit3.power)), True, (255, 0, 255), brown)
+        self.selectedUnitText = self.basicfont.render(("Selected Unit: Unit" + str(int(self.selectedUnit) + 1)), True, (255, 0, 255), brown)
+        self.currentPointsText = self.basicfont.render(("Points: " + str(self.points)), True, (255, 0, 255), brown)
+
         screen.blit(self.unit1PowerText, (self.textPosition, self.textLine(10)))
-        self.buttons.append(self.unit1PowerUpgrade)
+        screen.blit(self.unit2PowerText, (self.textPosition, self.textLine(13)))
+        screen.blit(self.unit3PowerText, (self.textPosition, self.textLine(16)))
+        screen.blit(self.selectedUnitText, (self.textPosition, self.textLine(3)))
+        screen.blit(self.currentPointsText, (self.textPosition, self.textLine(4)))
         for button in self.buttons:
             button.update()
 
@@ -210,6 +260,7 @@ class Player:
         self.unit1.update() 
         self.unit2.update() 
         self.unit3.update() 
+        self.dice.update()
 
     def changeSelectedUnit(self):
         if self.unit1.selected() == True:
@@ -223,6 +274,7 @@ class Player:
             self.unit1.isSelected = True
 class Button:
     def __init__(self, screen, pos, sizex, sizey, colour, colourActive, colourClick, function, fontSize, text, hoverText, clickText):
+        print "creating button"
         self.posx, self.posy = pos
         self.sizex = sizex
         self.sizey = sizey
@@ -244,7 +296,6 @@ class Button:
 
     def update(self):
         if self.active and not self.button.collidepoint(pygame.mouse.get_pos()):
-            print "huh?"
             self.active = False
         elif self.active:
             self.button = pygame.draw.rect(screen, self.colourClick, (self.posx, self.posy, self.sizex, self.sizey))
@@ -308,7 +359,6 @@ class Territory:
             waterLeft = False
             if self.pos - 1 > 0 and self.pos - 1 < amountBoxAll:
                 if world[self.pos - 1].type == "water":
-                    #print "yep, water up at" + str(self.pos)
                     waterUp = True
             if self.pos + amountBoxY > 0 and self.pos + amountBoxY < amountBoxAll:
                 if world[self.pos + amountBoxY].type == "water":
@@ -320,7 +370,6 @@ class Territory:
                 if world[self.pos - amountBoxY].type == "water":
                     waterLeft = True
 
-            #print "waterUp: " + str(waterUp) + " at pos " + str(self.pos)
             #Solid Water---------------
             if not waterUp and not waterRight and not waterDown and not waterLeft:
                 self.type = "grass"
@@ -392,26 +441,34 @@ class Territory:
 class Dice():
 
     def __init__(self, screen, pos):
+        print "creating"
         self.roll = 0
-        self.dicePosition = pos
+        self.dicePositionX, self.dicePositionY = pos
         self.diceCount = 1
+        self.visible = True
+        self.bounds = Rect(self.dicePositionX, self.dicePositionY, diceSizeX, diceSizeY)
+        self.rolling = True
 
-    def rolling(self):
-        self.roll = 1
-        if self.diceCount == 1:
-            self.diceSide = diceOne
-        if self.diceCount == 2:
-            self.diceSide = diceTwo
-        if self.diceCount == 3:
-            self.diceSide = diceThree
-        if self.diceCount == 4:
-            self.diceSide = diceFour
-        if self.diceCount == 5:
-            self.diceSide = diceFive
-        if self.diceCount == 6:
-            self.diceSide = diceSix
-        self.diceCount += 1
-        if self.diceCount == 7: self.diceCount = 1
+    def update(self):
+        if self.visible:
+            if self.rolling:
+                if self.diceCount == 1:
+                    self.diceSide = diceOne
+                if self.diceCount == 2:
+                    self.diceSide = diceTwo
+                if self.diceCount == 3:
+                    self.diceSide = diceThree
+                if self.diceCount == 4:
+                    self.diceSide = diceFour
+                if self.diceCount == 5:
+                    self.diceSide = diceFive
+                if self.diceCount == 6:
+                    self.diceSide = diceSix
+                self.diceCount += 1
+                if self.diceCount == 7: self.diceCount = 1
+                screen.blit(self.diceSide, (self.dicePositionX, self.dicePositionY))
+            else:
+                screen.blit(self.diceSide, (self.dicePositionX, self.dicePositionY))
 
     def clicked(self):
         self.roll = random.randint(1,7)
@@ -427,10 +484,8 @@ class Dice():
             self.diceSide = diceFive
         if self.roll == 6:
             self.diceSide = diceSix
-        #return self.roll
-
-    def update(self):
-        screen.blit(self.diceSide, self.dicePosition)
+        self.rolling = False
+        print self.roll
 
 def draw_rimmed_box(screen, box_rect, box_color, rim_width=0, rim_color=Color('black')):
     if rim_width:
@@ -469,29 +524,24 @@ def worldGen():
     for territory in world:
         territory.updateSprite()
 
+
 def runGame():
 #------Game Setup----------
-    playerX = 25
-    playerY = 25
     worldGen()
-    player1 = Player(screen, 5, world, red, "Lachlan", 1, player1StatsX)
-    player2 = Player(screen, 5, world, purple, "Lachlan", 2, player2StatsX)
+    player1 = Player(screen, True, 5, world, red, "Lachlan", 1, player1StatsX)
+    player2 = Player(screen, False, 5, world, purple, "Lachlan", 2, player2StatsX)
 
     #endTurn = Button(screen, (width - 50, height - 50), 45, 45, red, blue, green, "endTurn", 20, "End Turn", "End Turn", "Turn Ended")
-    regenerateWorld = Button(screen, (50, 50), 50, 50, green, blue, red, "regenerate", 20, "New World", "New World", "World Generated")
-    changeUnit = Button(screen, (500, 50), 50, 50, red, blue, green, "changeUnit", 20, "Change Unit", "Change Unit", "Unit Changed")
+    regenerateWorld = Button(screen, (50, 0), 50, 50, green, blue, red, "regenerate", 20, "New World", "New World", "World Generated")
+    changeUnit = Button(screen, (150, 0), 50, 50, red, blue, green, "changeUnit", 20, "Change Unit", "Change Unit", "Unit Changed")
     diceStop = Button(screen, dicePosition, diceSizeX, diceSizeY, white, black, white, "diceStop", 20, " ", " ", " ")
-    endTurn = Button(screen, (50, height - 100), 50, 50, purple, blue, green, "endTurn", 20, "End Turn", "End Turn", "Turn Ended")
+    endTurn = Button(screen, (250, 0), 50, 50, purple, blue, green, "endTurn", 20, "End Turn", "End Turn", "Turn Ended")
     buttons = [player1, player2, endTurn, regenerateWorld, changeUnit, diceStop, endTurn]
 
-    player1Turn = True
     colourBackRed = 0
     colourBackGreen = 0
     colourBackBlue = 0
 
-    diceCount = 1
-    diceMoving = True
-    dice1 = Dice(screen, dicePosition)
 
 
 
@@ -505,40 +555,39 @@ def runGame():
             if event.type == pygame.QUIT:
                 sys.exit()
             if event.type == pygame.MOUSEBUTTONUP:
-                if endTurn.mouseClick(pygame.mouse.get_pos()):
-                    if player1Turn:
-                        player1Turn = False
-                    else:
-                        player1Turn = True
                 if regenerateWorld.mouseClick(pygame.mouse.get_pos()):
                     worldGen()
                 if changeUnit.mouseClick(pygame.mouse.get_pos()):
-                    if player1Turn:
+                    if player1.turn:
                         player1.changeSelectedUnit()
                     else:
                         player2.changeSelectedUnit()
-                if diceStop.mouseClick(pygame.mouse.get_pos()):
-                    diceMoving = False
-                    dice1.clicked()
-                    
-                if endTurn.mouseClick(pygame.mouse.get_pos()):
-                    diceMoving = True
                 if player1Screen.collidepoint(pygame.mouse.get_pos()):
                     player1.clickDetected(pygame.mouse.get_pos())
+                    if not player1.turn:
+                        player2.turn = True
+                if player2Screen.collidepoint(pygame.mouse.get_pos()):
+                    player2.clickDetected(pygame.mouse.get_pos())
+                    if not player2.turn:
+                        player1.turn = True
+
         for territory in world:
             territory.update()
-        if player1Turn:
+
+
+        if player1.turn:
             player1.stats()
-            player1.move()          
-        else:
+            player1.move()
+
+
+        elif player2.turn:
             player2.stats()
-            player2.move()
+            player2.move()          
+
+
         for button in buttons:
             button.update()
-        if diceMoving:
-            print "yeah"
-            dice1.rolling()
-        dice1.update()
+
         pygame.display.flip()
 
 
