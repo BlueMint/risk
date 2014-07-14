@@ -14,6 +14,8 @@ import os
 import random
 import sys
 import eztext
+from time import gmtime, strftime
+
 pygame.init()
 
 
@@ -37,6 +39,7 @@ brown = (109, 41, 1)
 grey = (100, 100, 100)
 arrayOffsetX = width / 4
 arrayOffsetY = height / 8
+gameFont = "Aparajita"
 amountBoxX = 15
 amountBoxY = 10
 amountBoxAll = amountBoxX * amountBoxY
@@ -57,8 +60,8 @@ manSizeX = (int(boxSizeX / 1.5))
 manSizeY = (int(boxSizeY / 1.5))
 diceSizeX = 50
 diceSizeY = 50
-titleFont = pygame.font.SysFont(None, 50)
-subTitleFont = pygame.font.SysFont(None, 25)
+titleFont = pygame.font.SysFont(gameFont, 50)
+subTitleFont = pygame.font.SysFont(gameFont, 25)
 pathToSprite = "sprites/"
 #pathToSprite = 'D:/SDD LATEST/Year 12 Negotiate/sprites/'
 
@@ -104,7 +107,6 @@ diceSix = pygame.transform.scale(pygame.image.load(pathToSprite + 'diceSix.png')
 
 class Unit:
     def __init__(self, screen, pos, name, colour, world, selected, playerNumber, unitNumber):
-        print "making this"
         self.pos = pos
         self.colour = colour
         self.world = world
@@ -112,13 +114,12 @@ class Unit:
         self.isSelected = selected
         self.playerNumber = playerNumber
         self.unitNumber = unitNumber
-        self.basicfont = pygame.font.SysFont(None, 20)
+        self.basicfont = pygame.font.SysFont(gameFont, 20)
         self.power = 1
         self.dead = False
 
     def update(self):
         if not self.dead:
-            print "blitting people!"
             self.player = pygame.draw.rect(screen, self.colour, (self.world[self.pos].posx, self.world[self.pos].posy, boxSizeX, boxSizeY))
             self.unitNumberText = self.basicfont.render(str(self.unitNumber), True, (255, 0, 255), brown)
             if self.playerNumber == 1:
@@ -133,7 +134,6 @@ class Unit:
 class Player:
 
     def __init__(self, screen, turn, pos, world, colour, name, playerNumber, playerStatsX):
-        print "creating player"
         self.turn = turn
         self.pos = pos
         self.world = world
@@ -146,7 +146,7 @@ class Player:
         self.leftDown = False
         self.selectedUnit = 0
         self.textPosition = playerStatsX + 20
-        self.basicfont = pygame.font.SysFont(None, 20)
+        self.basicfont = pygame.font.SysFont(gameFont, 15)
         self.lineSpace = 20
         self.textCentre = 30
         self.points = 0
@@ -166,23 +166,23 @@ class Player:
  
         self.units = [self.unit1, self.unit2, self.unit3]
 
-        self.attackButton = Button(screen, (self.textPosition, self.textLine(10)), 100, 20, white, red, blue, "attackUnit", 20, "Attack!", "Kill Them!", "Attacking")
+        self.attackButton = Button(screen, (self.textPosition, self.textLine(10)), 100, 20, white, red, blue, "attackUnit", 15, "Attack!", "Kill Them!", "Attacking")
 
-        self.unit1PowerUpgrade = Button(screen, (self.textPosition, self.textLine(16)), 100, 20, white, red, blue, "upgradeUnit", 20, "Upgrade Unit 1", "Upgrade Unit 1", "Unit 1 Upgraded")
-        self.unit1SelectUnit = Button(screen, (self.textPosition, self.textLine(17)), 100, 20, white, red, blue, "selectUnit", 20, "Select Unit 1", "Select Unit 1", "Unit 1 Selected")
-        self.unit2PowerUpgrade = Button(screen, (self.textPosition, self.textLine(19)), 100, 20, white, red, blue, "upgradeUnit", 20, "Upgrade Unit 2", "Upgrade Unit 2", "Unit 2 Upgraded")
-        self.unit2SelectUnit = Button(screen, (self.textPosition, self.textLine(20)), 100, 20, white, red, blue, "selectUnit", 20, "Select Unit 2", "Select Unit 2", "Unit 2 Selected")
-        self.unit3PowerUpgrade = Button(screen, (self.textPosition, self.textLine(22)), 100, 20, white, red, blue, "upgradeUnit", 20, "Upgrade Unit 3", "Upgrade Unit 3", "Unit 3 Upgraded")
-        self.unit3SelectUnit = Button(screen, (self.textPosition, self.textLine(23)), 100, 20, white, red, blue, "selectUnit", 20, "Select Unit 3", "Select Unit 3", "Unit 3 Selected")
+        self.unit1PowerUpgrade = Button(screen, (self.textPosition, self.textLine(16)), 100, 20, white, red, blue, "upgradeUnit", 15, "Upgrade Unit 1", "Upgrade Unit 1", "Unit 1 Upgraded")
+        self.unit1SelectUnit = Button(screen, (self.textPosition, self.textLine(17)), 100, 20, white, red, blue, "selectUnit", 15, "Select Unit 1", "Select Unit 1", "Unit 1 Selected")
+        self.unit2PowerUpgrade = Button(screen, (self.textPosition, self.textLine(19)), 100, 20, white, red, blue, "upgradeUnit", 15, "Upgrade Unit 2", "Upgrade Unit 2", "Unit 2 Upgraded")
+        self.unit2SelectUnit = Button(screen, (self.textPosition, self.textLine(20)), 100, 20, white, red, blue, "selectUnit", 15, "Select Unit 2", "Select Unit 2", "Unit 2 Selected")
+        self.unit3PowerUpgrade = Button(screen, (self.textPosition, self.textLine(22)), 100, 20, white, red, blue, "upgradeUnit", 15, "Upgrade Unit 3", "Upgrade Unit 3", "Unit 3 Upgraded")
+        self.unit3SelectUnit = Button(screen, (self.textPosition, self.textLine(23)), 100, 20, white, red, blue, "selectUnit", 15, "Select Unit 3", "Select Unit 3", "Unit 3 Selected")
 
-        self.moveUp = Button(screen, (self.textPosition + self.textCentre, self.textLine(6)), 30, 30, white, grey, black, "moveUp", 40, " ^", " ^", " ^", " -")
-        self.moveLeft = Button(screen, (self.textPosition, self.textLine(7)), 30, 30, white, grey, black, "moveLeft", 40, " <", " <", " <", " -")
-        self.moveRight = Button(screen, (self.textPosition + 2 * self.textCentre, self.textLine(7)), 30, 30, white, grey, black, "moveRight", 40, " >", " >", " >", " -")
-        self.moveDown = Button(screen, (self.textPosition + self.textCentre, self.textLine(8)), 30, 30, white, grey, black, "moveDown", 40, " v", " v", " v", " -")
+        self.moveUp = Button(screen, (self.textPosition + self.textCentre, self.textLine(6)), 30, 30, white, grey, black, "moveUp", 30, " ^", " ^", " ^", " -")
+        self.moveLeft = Button(screen, (self.textPosition, self.textLine(7)), 30, 30, white, grey, black, "moveLeft", 30, " <", " <", " <", " -")
+        self.moveRight = Button(screen, (self.textPosition + 2 * self.textCentre, self.textLine(7)), 30, 30, white, grey, black, "moveRight", 30, " >", " >", " >", " -")
+        self.moveDown = Button(screen, (self.textPosition + self.textCentre, self.textLine(8)), 30, 30, white, grey, black, "moveDown", 30, " v", " v", " v", " -")
 
         self.dice = Dice(screen, (self.textPosition + self.textCentre, self.textLine(0))) 
 
-        self.endTurn = Button(screen, (self.textPosition, self.textLine(30)), 100, 20, white, red, blue, "endTurn", 20, "End Turn", "End Turn", "Turn Ended")
+        self.endTurn = Button(screen, (self.textPosition, self.textLine(30)), 100, 20, white, red, blue, "endTurn", 15, "End Turn", "End Turn", "Turn Ended")
 
         self.pointButtons = [self.unit1PowerUpgrade, self.unit2PowerUpgrade, self.unit3PowerUpgrade, self.moveUp, self.moveLeft, self.moveRight, self.moveDown]
         self.functionButtons = [self.endTurn, self.unit1SelectUnit, self.unit2SelectUnit, self.unit3SelectUnit, self.attackButton]
@@ -194,12 +194,6 @@ class Player:
             self.dead = True
         if self.enemy.unit1.dead and self.enemy.unit2.dead and self.enemy.unit3.dead:
             self.enemy.dead = True
-        elif self.unit1.dead:
-            self.unitDead(self.unit1)
-        elif self.unit2.dead:
-            self.unitDead(self.unit2)
-        elif self.unit3.dead:
-            self.unitDead(self.unit3)
 
         self.bonusDice = 0
         for unit in self.units:
@@ -224,19 +218,27 @@ class Player:
 
         self.dice.update()
 
+
         if self.points == 0:
             for button in self.pointButtons:
                 button.greyed = True
-                button.update()
+
         else:
             for button in self.pointButtons:
                 button.greyed = False
                 self.moveButtonUpdate()
-                button.update()
 
+        if self.unit1.dead:
+            self.unitDead(self.unit1)
+        if self.unit2.dead:
+            self.unitDead(self.unit2)
+        if self.unit3.dead:
+            self.unitDead(self.unit3)
 
-        for button in self.functionButtons:
+        for button in self.functionButtons + self.pointButtons:
             button.update()
+
+        
 
 
 
@@ -461,6 +463,8 @@ class Player:
                         unit.isSelected = False
         else:
             self.units[self.selectedUnit].dead = True
+            self.units[self.selectedUnit].power = 0
+            self.units[self.selectedUnit].pos = -1
             self.changeSelectedUnit()
 
 
@@ -475,7 +479,7 @@ class Button:
         self.function = function
         self.active = False
         self.button = pygame.draw.rect(screen, self.colour, (self.posx, self.posy, self.sizex, self.sizey))
-        self.basicfont = pygame.font.SysFont(None, fontSize)
+        self.basicfont = pygame.font.SysFont(gameFont, fontSize)
         self.text = text
         self.hoverText = hoverText
         self.clickText = clickText
@@ -538,15 +542,6 @@ class Territory:
             screen.blit(self.sprite, (self.posx, self.posy, boxSizeX, boxSizeY))
         elif self.type == "goldMine":
             screen.blit(self.sprite, (self.posx, self.posy, boxSizeX, boxSizeY))
-        if self.rect.collidepoint(pygame.mouse.get_pos()):
-            rect = pygame.draw.rect(screen, red, (self.posx, self.posy, boxSizeX, boxSizeY))
-            self.troops += 1
-            basicfont = pygame.font.SysFont(None, 48)
-            text = basicfont.render(str(self.pos), True, (255, 0, 0), (255, 255, 255))
-            textrect = text.get_rect()
-            textrect.centerx = rect.centerx
-            textrect.centery = rect.centery
-            screen.blit(text, textrect)
 
     def updateSprite(self):
         if self.type == "grass":
@@ -672,7 +667,7 @@ class Dice():
                 screen.blit(self.diceSide, (self.dicePositionX, self.dicePositionY))
 
     def clicked(self):
-        self.roll = random.randint(1, 6)
+        self.roll = random.randint(1, 600)
         if self.roll == 1:
             self.diceSide = diceOne
         if self.roll == 2:
@@ -739,7 +734,14 @@ def gameOverScreen(winner):
                 sys.exit()
             if event.type == pygame.MOUSEBUTTONUP:
                 if exitButton.mouseClick(pygame.mouse.get_pos()):
-                   sys.exit()
+                    file = open("scores.txt", "r")
+                    filedata = file.read()
+                    file.close()
+                    newLine = "On " + strftime("%Y-%m-%d %H:%M:%S") + " " + winner.name + " has been crowned as the conqueror!\n" + filedata
+                    file = open("scores.txt", "w")
+                    file.write(newLine)
+                    file.close()
+                    sys.exit()
         exitButton.update()
         screen.blit(title, (centreX - title.get_width() / 2, 20))
         screen.blit(subTitle1, (centreX - subTitle1.get_width() / 2, 150))
@@ -748,8 +750,7 @@ def gameOverScreen(winner):
         pygame.display.flip()
 
 def splashScreen():
-    while not pygame.time.get_ticks() > 500:
-        print pygame.time.get_ticks()
+    while not pygame.time.get_ticks() > 5000:
         screen.blit(splash, (0, 0))
         pygame.display.flip()
 
@@ -757,7 +758,7 @@ def menuScreen():
     menuScreen = True
     buttonSizeX = 400
     buttonSizeY = 75
-    basicfont = pygame.font.SysFont(None, 50)
+    basicfont = pygame.font.SysFont(gameFont, 50)
     startGame = Button(screen, (centreX - buttonSizeX / 2, 300), buttonSizeX, buttonSizeY, darkPurple, purple, white, "startGame", 40, "Start Game!", "Let's Go!", "Game Started!")
     howToPlay = Button(screen, (centreX - buttonSizeX / 2, 400), buttonSizeX, buttonSizeY, darkPurple, purple, white, "howToPlay", 40, "How To Play?", "How To Play!", "Check Documentation")
     credits = Button(screen, (centreX - buttonSizeX / 2, 500), buttonSizeX, buttonSizeY, darkPurple, purple, white, "credits", 40, "Credits", "Credits!", "By Lachlan Brown")
@@ -811,7 +812,9 @@ def gameIntroScreen(player1Name, player2Name):
         txtbx1.draw(screen)
         enterPlayerName.update()
         screen.blit(title, (centreX - title.get_width() / 2, 200))
-        screen.blit(subTitle1, (centreX - subTitle1.get_width() / 2, 250))
+        if player1NameNotChosen:
+            screen.blit(subTitle1, (centreX - subTitle1.get_width() / 2, 250))
+        else: screen.blit(subTitle2, (centreX - subTitle1.get_width() / 2, 250))
         pygame.display.flip()
     return player1Name, player2Name
 
@@ -820,7 +823,7 @@ def worldGenerationScreen():
     worldGenerationScreen = True
     newWorldButton = Button(screen, (centreX - 150, height - 50), 100, 30, darkPurple, purple, white, "regenWorld", 30, "New World", "New World", "New World")
     okayButton = Button(screen, (centreX + 50, height - 50), 100, 30, darkPurple, purple, white, "Continue", 30, "Continue", "Continue", "Continue")
-    title = titleFont.render(("Please Enter Player Names"), True, (0, 0, 0), brown)
+    title = titleFont.render(("Find a nice world!"), True, (0, 0, 0), brown)
     worldGen()
     while worldGenerationScreen:
         drawBackground()
